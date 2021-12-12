@@ -141,9 +141,11 @@ function addUserInputToCSV()
   if (isset($_GET['deleteButton'])) {
     deleteRow();
     updateOriginalFile();
+    
     // Refresh Page
     header("Refresh:0; url=index.php");
   }
+
 
 
 
@@ -216,6 +218,54 @@ function updateOriginalFile()
 }
 
 
+function tableToPdf()
+{
+  global $entriesPerRow;
+  global $headEntries;
+  global $filename;
+
+  if(isset($_POST['toPDF'])){
+
+    require('fpdf.php');
+    $pdf = new FPDF();
+    $pdf->AddPage();
+    $pdf->SetFont('Arial','B',16);
+
+
+    if (!is_file($filename)) {
+      createCSVFile();
+    }
+    if (($handle = fopen($filename, "r")) !== FALSE) {
+      $data = fgetcsv($handle, 1000, ";");
+      $num = count($data);
+  
+      // Read Tableheads
+      for ($c = 0; $c < $num; $c++) {
+        $pdf->Cell(40,7,$data[$c],1);
+      }  
+      $pdf->Ln();
+      // Count Index to assign a number to a row
+  
+      // Read Rows from Tablebody
+      while (($data = fgetcsv($handle, 1000, ";")) !== FALSE) {
+        $num = count($data);
+  
+        // Read Fields from each row
+        for ($c = 0; $c < $num; $c++) {
+          $pdf->Cell(40,7,$data[$c],1);
+        }
+        $pdf->Ln();
+        
+      }
+      fclose($handle);
+    }
+    $pdf->SetFont('Arial','B',16);
+    $pdf->Output('F','table.pdf');
+  }
+
+}
+
+
 
 ?>
 
@@ -235,8 +285,18 @@ function updateOriginalFile()
         <button type="submit" class="btn btn-success" value="submitButton" name="submitButton" style="float:right">Add Entry</button>
       </form>
     </div>
+    
 
   </div>
+
+  <div class="input">
+    <?php
+      tableToPdf();
+      ?>
+      <form method="post">
+        <button type="submit" class="btn btn-success" value="toPDF" name="toPDF" style="float:right">Create PDF</button>
+      </form>
+    </div>
 </body>
 
 </html>
